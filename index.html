@@ -108,10 +108,60 @@
 
     </div>
 
-    <section id="settlement-page" data-page="settlement" class="panel" aria-labelledby="settlement-title" hidden>
-      <h2 id="settlement-title">牌局结算</h2>
-      <div class="empty-state">结算工具即将上线。当前可使用「胡牌计番」查看可胡牌与番数。</div>
-    </section>
+    <div id="settlement-page" data-page="settlement" hidden>
+      <section class="panel" aria-labelledby="settlement-title">
+        <div class="section-heading">
+          <div><span class="step">01</span><h2 id="settlement-title">设置四位玩家</h2></div>
+          <span class="hint">名称可改，座次与 ID 保持不变</span>
+        </div>
+        <div id="settlement-player-names" class="settlement-player-names">
+          <label for="settlement-name-p1">玩家 1<input id="settlement-name-p1" data-player-id="p1" maxlength="12" required></label>
+          <label for="settlement-name-p2">玩家 2<input id="settlement-name-p2" data-player-id="p2" maxlength="12" required></label>
+          <label for="settlement-name-p3">玩家 3<input id="settlement-name-p3" data-player-id="p3" maxlength="12" required></label>
+          <label for="settlement-name-p4">玩家 4<input id="settlement-name-p4" data-player-id="p4" maxlength="12" required></label>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="settlement-balance-title">
+        <div class="section-heading">
+          <div><span class="step">02</span><h2 id="settlement-balance-title">当前收支</h2></div>
+          <span id="settlement-total-label" class="counter">最终收支</span>
+        </div>
+        <div id="settlement-balances" class="settlement-balances" aria-live="polite"></div>
+        <p id="settlement-replay-status" class="status" aria-live="assertive"></p>
+      </section>
+
+      <section class="panel" aria-labelledby="settlement-event-title">
+        <div class="section-heading">
+          <div><span class="step">03</span><h2 id="settlement-event-title">新增事件</h2></div>
+          <span class="hint">按真实发生顺序录入</span>
+        </div>
+        <form id="settlement-event-form" novalidate>
+          <label class="field-label" for="settlement-event-type">事件类型</label>
+          <select id="settlement-event-type" name="eventType">
+            <option value="concealedKong">暗杠</option>
+            <option value="addedKong">补杠</option>
+            <option value="discardKong">直杠</option>
+            <option value="discardWin">点炮胡</option>
+            <option value="selfDraw">自摸胡</option>
+          </select>
+          <div id="settlement-event-fields" class="settlement-event-fields"></div>
+          <p id="settlement-form-error" class="status" aria-live="assertive"></p>
+          <button id="settlement-add-event" class="primary-button" type="submit">记入流水</button>
+        </form>
+      </section>
+
+      <section class="panel" aria-labelledby="settlement-ledger-title">
+        <div class="section-heading">
+          <div><span class="step">04</span><h2 id="settlement-ledger-title">事件流水</h2></div>
+          <div class="actions">
+            <button id="settlement-undo" class="text-button" type="button">撤销</button>
+            <button id="settlement-clear" class="text-button danger" type="button">清空</button>
+          </div>
+        </div>
+        <div id="settlement-ledger" class="settlement-ledger" aria-live="polite"></div>
+      </section>
+    </div>
     <section id="discard-page" data-page="discard" class="panel" aria-labelledby="discard-title" hidden>
       <h2 id="discard-title">出牌建议</h2>
       <div class="empty-state">出牌建议工具即将上线。当前可使用「胡牌计番」调整手牌并查看听牌结果。</div>
@@ -124,6 +174,8 @@
   <script src="scoring.js"></script>
   <script src="ui-common.js"></script>
   <script src="hu-page.js"></script>
+  <script src="settlement.js"></script>
+  <script src="settlement-page.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
