@@ -377,6 +377,12 @@
   function onSubmit(event) {
     if (event.target !== elements.form) return;
     event.preventDefault();
+    const blankName = elements.nameInputs.find((input) => !input.value.trim());
+    if (blankName) {
+      blankName.setCustomValidity('请输入玩家名称');
+      showFormError('请先输入所有玩家名称。', blankName);
+      return;
+    }
     readFormDraft();
     const firstEmpty = [...elements.form.querySelectorAll('[required]')].find((control) => !control.value);
     if (firstEmpty) {

@@ -32,14 +32,14 @@
     for (const player of players) {
       if (!player || typeof player !== 'object'
         || typeof player.id !== 'string' || player.id.length === 0
-        || typeof player.name !== 'string') {
+        || typeof player.name !== 'string' || player.name.trim().length === 0) {
         return { ok: false, error: '玩家必须包含非空 id 和 name' };
       }
       if (ids.has(player.id)) {
         return { ok: false, error: `玩家 id 重复：${player.id}` };
       }
       ids.add(player.id);
-      playerStates.push({ id: player.id, name: player.name, won: false });
+      playerStates.push({ id: player.id, name: player.name.trim(), won: false });
     }
 
     return {

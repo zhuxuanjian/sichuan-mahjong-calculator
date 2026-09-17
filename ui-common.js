@@ -33,5 +33,11 @@
       + (warning ? '<span class="warning-label">定缺副露，请移除或修正</span>' : '') + '</div>'
       + `<button type="button" class="text-button" data-remove-meld="${index}" aria-label="移除${MELD_NAMES[meld.type]}${tileLabel(meld.tile)}">移除</button></article>`;
   }
-  return { tileLabel, tileMarkup, countPhysicalTiles, pickerMarkup, meldMarkup };
+  function restoreFocusAfterRemoval(container, itemSelector, removedIndex, fallback) {
+    const items = [...container.querySelectorAll(itemSelector)];
+    const nearestItem = items[Math.min(Math.max(removedIndex, 0), items.length - 1)];
+    const target = nearestItem || fallback;
+    if (target && typeof target.focus === 'function') target.focus();
+  }
+  return { tileLabel, tileMarkup, countPhysicalTiles, pickerMarkup, meldMarkup, restoreFocusAfterRemoval };
 });

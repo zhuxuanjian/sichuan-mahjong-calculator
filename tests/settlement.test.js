@@ -19,6 +19,22 @@ test('rejects player lists that do not contain exactly four players', () => {
   }
 });
 
+test('rejects trim-empty player names and normalizes valid surrounding whitespace', () => {
+  const blankName = players.map((player, index) => (
+    index === 1 ? { ...player, name: '  \t ' } : player
+  ));
+  const rejected = Settlement.replay(blankName, []);
+  assert.equal(rejected.ok, false);
+  assert.match(rejected.error.message, /非空.*name/);
+
+  const paddedName = players.map((player, index) => (
+    index === 1 ? { ...player, name: '  Bob  ' } : player
+  ));
+  const accepted = Settlement.replay(paddedName, []);
+  assert.equal(accepted.ok, true);
+  assert.equal(accepted.players[1].name, 'Bob');
+});
+
 test('settles the three kong types with fixed amounts', () => {
   const result = Settlement.replay(players, [
     { type: 'concealedKong', actorId: 'a' },

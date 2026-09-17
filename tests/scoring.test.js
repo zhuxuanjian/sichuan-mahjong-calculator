@@ -109,8 +109,12 @@ test('scores a pure seven-pairs hand', () => {
 test('adds pure one suit only when every concealed and exposed tile shares a suit', () => {
   const pure = scoreNotation('12312345678977m');
   const mixed = scoreNotation('123m123p456p789p77p');
+  const mixedByMeld = scoreNotation('12312345677m', 'discard', 'normal', [
+    { type: 'pong', tile: 9 },
+  ]);
   assert.deepEqual(names(pure), ['清一色']);
   assert.equal(names(mixed).includes('清一色'), false);
+  assert.equal(names(mixedByMeld).includes('清一色'), false);
 });
 
 test('scores an ordinary winning hand as plain win', () => {

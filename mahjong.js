@@ -40,12 +40,12 @@
   }
 
   function validateTileState(counts, melds = [], expectedConcealed) {
+    if (!Array.isArray(melds) || melds.length > 4) {
+      return { ok: false, error: '副露数据无效' };
+    }
     const countValidation = validateCounts(counts, expectedConcealed);
     if (!countValidation.ok) {
       return countValidation;
-    }
-    if (!Array.isArray(melds) || melds.length > 4) {
-      return { ok: false, error: '副露数据无效' };
     }
 
     const physicalCounts = counts.slice();

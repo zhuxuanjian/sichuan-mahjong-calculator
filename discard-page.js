@@ -35,10 +35,16 @@
       && currentState.hand.some((tile) => Math.floor(tile / 9) === currentState.missingSuit);
   }
 
+  function hasMissingSuitMeld(currentState) {
+    return currentState.missingSuit !== null
+      && currentState.melds.some((meld) => Math.floor(meld.tile / 9) === currentState.missingSuit);
+  }
+
   function canSelectDiscard(currentState, tile) {
     if (![0, 1, 2].includes(currentState.missingSuit)
       || currentState.hand.length !== targetCount(currentState.melds)
-      || !currentState.hand.includes(tile)) return false;
+      || !currentState.hand.includes(tile)
+      || hasMissingSuitMeld(currentState)) return false;
     return !hasMissingSuitTile(currentState)
       || Math.floor(tile / 9) === currentState.missingSuit;
   }
@@ -102,6 +108,9 @@
   }
 
   function createAnalysisView(currentState, mahjong, scoring) {
+    if (!Array.isArray(currentState.melds) || currentState.melds.length > 4) {
+      return { kind: 'error', message: '最多只能录入 4 组副露。' };
+    }
     const target = targetCount(currentState.melds);
     if (![0, 1, 2].includes(currentState.missingSuit)) {
       return { kind: 'incomplete', message: '请先选择定缺花色。' };
@@ -114,6 +123,9 @@
           ? `还差 ${difference} 张暗手牌。`
           : `副露已更新，请移除 ${-difference} 张多余暗手牌。`,
       };
+    }
+    if (hasMissingSuitMeld(currentState)) {
+      return { kind: 'blocked', message: '副露中有定缺花色，请先移除或修正对应副露。' };
     }
     if (currentState.selectedDiscard === null) {
       return { kind: 'ready', message: hasMissingSuitTile(currentState)
@@ -166,7 +178,9 @@
     const ui = browserUI;
     const target = targetCount(state.melds);
     const physical = ui.countPhysicalTiles(state.hand, state.melds);
-    const selectionMode = state.hand.length === target && [0, 1, 2].includes(state.missingSuit);
+    const selectionMode = state.hand.length === target
+      && [0, 1, 2].includes(state.missingSuit)
+      && !hasMissingSuitMeld(state);
     const forcedMissingSuit = selectionMode && hasMissingSuitTile(state);
 
     elements.count.textContent = `${state.hand.length} / ${target}`;
@@ -227,14 +241,23 @@
         || browserUI.countPhysicalTiles(state.hand, state.melds)[tile] >= 4) return;
       change(() => { state.hand.push(tile); state.hand.sort((left, right) => left - right); });
     } else if (data.handIndex !== undefined) {
-      change(() => { state.hand.splice(Number(data.handIndex), 1); });
+      const removedIndex = Number(data.handIndex);
+      change(() => { state.hand.splice(removedIndex, 1); });
+      browserUI.restoreFocusAfterRemoval(
+        elements.hand,
+        'button.tile',
+        removedIndex,
+        elements.picker.querySelector('[data-tile]:not([disabled])') || elements.picker.querySelector('[data-tile]'),
+      );
     } else if (data.discardTile !== undefined) {
       const tile = Number(data.discardTile);
       if (canSelectDiscard(state, tile) && state.selectedDiscard !== tile) {
         change(() => { state.selectedDiscard = tile; });
       }
     } else if (data.removeMeld !== undefined) {
-      change(() => { state.melds.splice(Number(data.removeMeld), 1); });
+      const removedIndex = Number(data.removeMeld);
+      change(() => { state.melds.splice(removedIndex, 1); });
+      browserUI.restoreFocusAfterRemoval(elements.melds, '[data-remove-meld]', removedIndex, elements.addMeld);
     } else if (data.discardMissingSuit !== undefined) {
       const suit = Number(data.discardMissingSuit);
       if (state.missingSuit !== suit) change(() => { state.missingSuit = suit; });

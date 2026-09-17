@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const projectRoot = process.env.PROJECT_ROOT || resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const edgePath = process.env.EDGE_PATH || 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 const outputDir = process.env.BROWSER_ARTIFACTS || resolve(projectRoot, '.browser-artifacts');
 const profile = await mkdtemp(resolve(tmpdir(), 'settlement-edge-'));
@@ -69,6 +69,18 @@ async function screenshot(filename) {
   await writeFile(resolve(outputDir, filename), Buffer.from(shot.data, 'base64'));
 }
 
+async function closeEdgeProcess() {
+  if (edge.exitCode === null && !edge.killed) {
+    await new Promise((resolveWait) => {
+      const onExit = () => { clearTimeout(timer); resolveWait(); };
+      const timer = setTimeout(() => { edge.off('exit', onExit); resolveWait(); }, 1000);
+      edge.once('exit', onExit);
+    });
+  }
+  if (edge.exitCode === null && !edge.killed) edge.kill();
+  if (edge.exitCode === null) await new Promise((resolveWait) => edge.once('exit', resolveWait));
+}
+
 try {
   const target = await waitForTarget();
   client = connect(target.webSocketDebuggerUrl);
@@ -92,7 +104,21 @@ try {
       control.click();
     };
     window.__settlementSmoke = { change, click };
-    ['Alice', 'Bob', 'Carol', 'Dave'].forEach((name, index) => change('#settlement-name-p' + (index + 1), name));
+    const blankName = document.querySelector('#settlement-name-p1');
+    blankName.value = '  \t ';
+    blankName.dispatchEvent(new Event('change', { bubbles: true }));
+    click('#settlement-add-event');
+    window.__nameGuard = {
+      events: document.querySelectorAll('.ledger-event').length,
+      status: document.querySelector('#settlement-form-error').textContent,
+      focused: document.activeElement.id,
+    };
+    if (window.__nameGuard.events !== 0 || !/请先输入所有玩家名称/.test(window.__nameGuard.status)
+      || window.__nameGuard.focused !== 'settlement-name-p1') throw new Error('Blank player name bypassed the settlement guard');
+
+    change('#settlement-name-p1', '  Alice  ');
+    if (document.querySelector('#settlement-name-p1').value !== 'Alice') throw new Error('Player name was not normalized');
+    ['Bob', 'Carol', 'Dave'].forEach((name, index) => change('#settlement-name-p' + (index + 2), name));
 
     change('#settlement-event-type', 'concealedKong');
     change('[name="actorId"]', 'p1'); click('#settlement-add-event');
@@ -114,6 +140,7 @@ try {
   })()`);
 
   const desktop = await evaluate(`(() => ({
+    nameGuard: window.__nameGuard,
     events: document.querySelectorAll('.ledger-event').length,
     balanceGroups: [...document.querySelectorAll('.event-balances')].map((node) => node.children.length),
     transfers: document.querySelectorAll('.transfer-list li').length,
@@ -121,6 +148,11 @@ try {
     overflow: document.documentElement.scrollWidth > innerWidth,
   }))()`);
   assert.equal(desktop.events, 5);
+  assert.deepEqual(desktop.nameGuard, {
+    events: 0,
+    status: '请先输入所有玩家名称。',
+    focused: 'settlement-name-p1',
+  });
   assert.deepEqual(desktop.balanceGroups, [4, 4, 4, 4, 4]);
   assert.equal(desktop.transfers, 10);
   assert.match(desktop.status, /净收支合计 \+0/);
@@ -187,6 +219,6 @@ try {
   await client.send('Browser.close');
 } finally {
   if (client) client.close();
-  if (!edge.killed) edge.kill();
+  await closeEdgeProcess();
   await rm(profile, { recursive: true, force: true });
 }

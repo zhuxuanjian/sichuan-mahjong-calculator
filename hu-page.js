@@ -134,9 +134,18 @@
       if (state.hand.length >= target() || ui.countPhysicalTiles(state.hand, state.melds)[tile] >= 4) return;
       change(() => { state.hand.push(tile); state.hand.sort((a, b) => a - b); });
     } else if (data.handIndex !== undefined) {
-      change(() => { state.hand.splice(Number(data.handIndex), 1); });
+      const removedIndex = Number(data.handIndex);
+      change(() => { state.hand.splice(removedIndex, 1); });
+      ui.restoreFocusAfterRemoval(
+        elements.hand,
+        'button.tile',
+        removedIndex,
+        elements.picker.querySelector('[data-tile]:not([disabled])') || elements.picker.querySelector('[data-tile]'),
+      );
     } else if (data.removeMeld !== undefined) {
-      change(() => { state.melds.splice(Number(data.removeMeld), 1); });
+      const removedIndex = Number(data.removeMeld);
+      change(() => { state.melds.splice(removedIndex, 1); });
+      ui.restoreFocusAfterRemoval(elements.melds, '[data-remove-meld]', removedIndex, elements.addMeld);
     } else if (data.missingSuit !== undefined) {
       if (state.missingSuit !== Number(data.missingSuit)) change(() => { state.missingSuit = Number(data.missingSuit); });
     } else if (data.meldType !== undefined) {

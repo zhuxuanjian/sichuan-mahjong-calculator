@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const projectRoot = process.env.PROJECT_ROOT || resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const edgePath = process.env.EDGE_PATH || 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 const outputDir = process.env.BROWSER_ARTIFACTS || resolve(projectRoot, '.browser-artifacts');
 const profile = await mkdtemp(resolve(tmpdir(), 'discard-edge-'));
@@ -67,6 +67,18 @@ async function screenshot(filename) {
   const shot = await client.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
   await mkdir(outputDir, { recursive: true });
   await writeFile(resolve(outputDir, filename), Buffer.from(shot.data, 'base64'));
+}
+
+async function closeEdgeProcess() {
+  if (edge.exitCode === null && !edge.killed) {
+    await new Promise((resolveWait) => {
+      const onExit = () => { clearTimeout(timer); resolveWait(); };
+      const timer = setTimeout(() => { edge.off('exit', onExit); resolveWait(); }, 1000);
+      edge.once('exit', onExit);
+    });
+  }
+  if (edge.exitCode === null && !edge.killed) edge.kill();
+  if (edge.exitCode === null) await new Promise((resolveWait) => edge.once('exit', resolveWait));
 }
 
 try {
@@ -176,6 +188,42 @@ try {
     assert.equal(meldTargets[index + 1].count, '0 / 14');
   }
 
+  const focusAndMissingMeld = await evaluate(`(() => {
+    const { clear, missing, addTiles, click } = window.__discardSmoke;
+    clear(); missing(2); addTiles([0, 1, 2]);
+    click('#discard-hand [data-hand-index="1"]');
+    const handFocus = document.activeElement.getAttribute('aria-label');
+    clear(); missing(2); addTiles([0, 1, 2, 9, 10, 11, 12, 13, 14, 15, 15]);
+    document.querySelector('#discard-meld-tile').value = '18';
+    document.querySelector('#discard-meld-tile').dispatchEvent(new Event('change', { bubbles: true }));
+    click('#discard-add-meld');
+    const missingMeld = {
+      status: document.querySelector('#discard-status').textContent,
+      discardChoices: document.querySelectorAll('#discard-hand [data-discard-tile]').length,
+      removalChoices: document.querySelectorAll('#discard-hand [data-hand-index]').length,
+    };
+    const meldFocusBeforeRemove = document.querySelector('[data-remove-meld="0"]');
+    meldFocusBeforeRemove.click();
+    return {
+      handFocus,
+      meldFocus: document.activeElement.id,
+      missingMeld,
+      limitHint: document.querySelector('#discard-page .rule-note').textContent,
+      limitHintInBounds: (() => {
+        const box = document.querySelector('#discard-page .rule-note').getBoundingClientRect();
+        return box.left >= 0 && box.right <= innerWidth;
+      })(),
+    };
+  })()`);
+  assert.equal(focusAndMissingMeld.handFocus, '移除3万');
+  assert.equal(focusAndMissingMeld.meldFocus, 'discard-add-meld');
+  assert.deepEqual(focusAndMissingMeld.missingMeld, {
+    status: '副露中有定缺花色，请先移除或修正对应副露。',
+    discardChoices: 0,
+    removalChoices: 11,
+  });
+  assert.match(focusAndMissingMeld.limitHint, /每一种牌最多四张/);
+
   await evaluate(`(() => {
     const { clear, missing, addTiles, selectDiscard, click } = window.__discardSmoke;
     clear(); missing(2); addTiles([0, 1, 2, 8, 8, 9, 10, 11, 12, 13, 14, 15, 15, 15]); selectDiscard(8);
@@ -200,11 +248,16 @@ try {
       const box = node.getBoundingClientRect(); return box.left >= 0 && box.right <= 375 && box.width > 0;
     }),
     selected: document.querySelectorAll('.selected-discard').length,
+    limitHintInBounds: (() => {
+      const box = document.querySelector('#discard-page .rule-note').getBoundingClientRect();
+      return box.left >= 0 && box.right <= 375;
+    })(),
   }))()`);
   assert.equal(mobile.overflow, false);
   assert.ok(mobile.cards > 0);
   assert.equal(mobile.scoresInBounds, true);
   assert.ok(mobile.selected > 0);
+  assert.equal(mobile.limitHintInBounds, true);
   await evaluate('window.__discardSmoke.selectDiscard(0)');
   const mobileInteraction = await evaluate(`(() => ({
     handCount: document.querySelectorAll('#discard-hand .tile').length,
@@ -214,10 +267,10 @@ try {
   assert.deepEqual(mobileInteraction, { handCount: 14, selected: 1, summary: '已选择打出 1万；手牌仍保留该牌，便于切换比较。' });
   await screenshot('discard-mobile-375.png');
 
-  console.log(JSON.stringify({ listening, secondSelection, forced, deadWait, meldTargets, navigation, mobile, mobileInteraction, outputDir }, null, 2));
+  console.log(JSON.stringify({ listening, secondSelection, forced, deadWait, meldTargets, focusAndMissingMeld, navigation, mobile, mobileInteraction, outputDir }, null, 2));
   await client.send('Browser.close');
 } finally {
   if (client) client.close();
-  if (!edge.killed) edge.kill();
+  await closeEdgeProcess();
   await rm(profile, { recursive: true, force: true });
 }

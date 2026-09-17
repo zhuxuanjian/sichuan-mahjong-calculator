@@ -62,6 +62,19 @@ test('keeps a seven-pairs interpretation when it contains a four-of-a-kind', () 
   assert.ok(dragonWait.interpretations.some((win) => win.kind === 'sevenPairs'));
 });
 
+test('keeps dragon-pairs compatibility fields with the exact root count', () => {
+  assert.deepEqual(Mahjong.getSpecialHands(counts('11112233445566m')), {
+    sevenPairs: true,
+    dragonPairs: true,
+    dragonCount: 1,
+  });
+  assert.deepEqual(Mahjong.getSpecialHands(counts('11112222334455m')), {
+    sevenPairs: true,
+    dragonPairs: true,
+    dragonCount: 2,
+  });
+});
+
 test('reports both standard and seven-pairs interpretations', () => {
   const result = waits(counts('1122334455667m'), [], 1);
   const seven = result.find((item) => item.tile === 6);
@@ -168,10 +181,56 @@ test('rejects invalid exposed meld types and tiles', () => {
 });
 
 test('returns distinct standard decompositions for an ambiguous hand', () => {
-  const standards = Mahjong.getWinInterpretations(counts('11223344556677m'), [])
-    .filter((win) => win.kind === 'standard');
-  assert.ok(standards.length > 1);
-  assert.equal(new Set(standards.map((win) => JSON.stringify(win))).size, standards.length);
+  assert.deepEqual(Mahjong.getWinInterpretations(counts('11223344556677m'), []), [
+    {
+      kind: 'standard',
+      pair: 0,
+      melds: [
+        { kind: 'sequence', tile: 1 },
+        { kind: 'sequence', tile: 1 },
+        { kind: 'sequence', tile: 4 },
+        { kind: 'sequence', tile: 4 },
+      ],
+    },
+    {
+      kind: 'standard',
+      pair: 3,
+      melds: [
+        { kind: 'sequence', tile: 0 },
+        { kind: 'sequence', tile: 0 },
+        { kind: 'sequence', tile: 4 },
+        { kind: 'sequence', tile: 4 },
+      ],
+    },
+    {
+      kind: 'standard',
+      pair: 6,
+      melds: [
+        { kind: 'sequence', tile: 0 },
+        { kind: 'sequence', tile: 0 },
+        { kind: 'sequence', tile: 3 },
+        { kind: 'sequence', tile: 3 },
+      ],
+    },
+    { kind: 'sevenPairs' },
+  ]);
+});
+
+test('rejects five melds before deriving a negative concealed target', () => {
+  const melds = [0, 1, 2, 3, 4].map((tile) => ({ type: 'pong', tile }));
+
+  assert.throws(() => Mahjong.findWinningTiles({
+    concealedCounts: Array(27).fill(0),
+    melds,
+    missingSuit: 2,
+  }), /副露数据无效/);
+  assert.throws(() => Mahjong.analyzeDiscard({
+    concealedCounts: Array(27).fill(0),
+    melds,
+    missingSuit: 2,
+    discardTile: 0,
+    scoreBestWin() {},
+  }), /副露数据无效/);
 });
 
 test('rejects a fifth physical copy when an exposed pong already uses three copies', () => {
