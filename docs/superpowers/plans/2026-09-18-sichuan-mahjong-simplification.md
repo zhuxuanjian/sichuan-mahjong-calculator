@@ -17,6 +17,7 @@
 - Other nonzero counts are foul (`相公`) and must not call the analysis engine.
 - Keep missing-suit selection and enforcement; remove every exposed-meld input and rule.
 - Hu results show only winning tiles. Discard results show the selected discard, winning tiles, and theoretical remaining copies.
+- A complete discard-page hand shows a non-blocking “当前手牌已胡牌” notice while keeping discard selection and analysis available.
 - No page may show fan, pattern names, win method, special context, or settlement functionality.
 - Mobile suit pickers (9 tiles) and current hands (up to 14 tiles) remain single-row, proportionally scaled, and never horizontally scroll.
 - Keep the existing public GitHub Pages URL and dependency-free local-file operation.
@@ -162,6 +163,8 @@ test('discard result view contains no scoring fields', () => {
 ```
 
 Add browser assertions that navigation has two buttons, `#settlement` falls back to `#hu`, Hu DOM contains none of `副露、暗杠、胡牌情境、番`, and discard result contains no `点炮、自摸、番型、番`.
+
+Add a page/browser case proving an already-complete hand displays the Hu notice before selection and still produces discard analysis after the user selects a tile.
 
 - [ ] **Step 2: Run page tests and verify RED**
 
