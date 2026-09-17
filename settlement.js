@@ -23,6 +23,9 @@
     if (!Array.isArray(players)) {
       return { ok: false, error: '玩家数据必须是数组' };
     }
+    if (players.length !== 4) {
+      return { ok: false, error: '结算必须恰好有 4 名玩家' };
+    }
 
     const ids = new Set();
     const playerStates = [];

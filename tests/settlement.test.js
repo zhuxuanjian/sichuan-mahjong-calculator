@@ -8,6 +8,17 @@ function nets(result) {
   return result.players.map((player) => player.net);
 }
 
+test('rejects player lists that do not contain exactly four players', () => {
+  const cases = [players.slice(0, 3), players.concat({ id: 'e', name: 'E' })];
+
+  for (const invalidPlayers of cases) {
+    const result = Settlement.replay(invalidPlayers, []);
+    assert.equal(result.ok, false);
+    assert.equal(result.error.index, 0);
+    assert.match(result.error.message, /4/);
+  }
+});
+
 test('settles the three kong types with fixed amounts', () => {
   const result = Settlement.replay(players, [
     { type: 'concealedKong', actorId: 'a' },
