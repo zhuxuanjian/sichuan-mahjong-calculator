@@ -63,6 +63,18 @@ test('scores a standard all-triplets hand as big pairs', () => {
   assert.equal(result.rawFan, 1);
 });
 
+test('scores four exposed pongs and a concealed pair as gold hook without roots', () => {
+  const melds = [
+    { type: 'pong', tile: 0 },
+    { type: 'pong', tile: 1 },
+    { type: 'pong', tile: 9 },
+    { type: 'pong', tile: 10 },
+  ];
+  const result = scoreNotation('55s', 'discard', 'normal', melds);
+  assert.deepEqual(names(result), ['金钩钓']);
+  assert.equal(result.rawFan, 1);
+});
+
 test('scores four exposed melds as gold hook without also labeling big pairs', () => {
   const melds = [
     { type: 'pong', tile: 0 },
@@ -145,6 +157,8 @@ test('rejects conflicting method and special context combinations', () => {
     /杠上花.*自摸/,
   );
   assert.throws(() => scoreNotation('123m123p456p789s77s', 'selfDraw', 'robKong'), /抢杠胡.*点炮/);
+  assert.throws(() => scoreNotation('123m123p456p789s77s', 'discard', 'lastTile'), /海底捞月.*自摸/);
+  assert.throws(() => scoreNotation('123m123p456p789s77s', 'selfDraw', 'kongDiscard'), /杠上炮.*点炮/);
 });
 
 test('does not cap exactly four raw fan', () => {
