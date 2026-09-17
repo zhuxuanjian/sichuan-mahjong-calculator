@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123e31">
+  <meta name="description" content="离线计算四川麻将 13 张手牌胡哪些牌，支持定缺、七对和龙七对。">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23185640'/%3E%3Ctext x='32' y='45' text-anchor='middle' font-size='42' fill='%23f5d879'%3E%E8%83%A1%3C/text%3E%3C/svg%3E">
+  <title>四川麻将听牌计算器</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">四川麻将 · 血战到底</p>
+        <h1>听牌计算器</h1>
+        <p class="hero-copy">选定缺门，凑齐 13 张牌，即刻查看胡哪些牌。</p>
+      </div>
+      <div class="hero-mark" aria-hidden="true">胡</div>
+    </header>
+
+    <section class="panel" aria-labelledby="missing-title">
+      <div class="section-heading">
+        <div>
+          <span class="step">01</span>
+          <h2 id="missing-title">选择定缺</h2>
+        </div>
+        <span class="hint">胡牌时手中不能有缺门</span>
+      </div>
+      <div class="segmented" role="radiogroup" aria-label="定缺花色">
+        <button type="button" data-missing-suit="0" role="radio" aria-checked="false">缺万</button>
+        <button type="button" data-missing-suit="1" role="radio" aria-checked="false">缺筒</button>
+        <button type="button" data-missing-suit="2" role="radio" aria-checked="false">缺条</button>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="picker-title">
+      <div class="section-heading">
+        <div>
+          <span class="step">02</span>
+          <h2 id="picker-title">添加手牌</h2>
+        </div>
+        <span id="hand-count" class="counter">0 / 13</span>
+      </div>
+      <div id="tile-picker" class="tile-picker"></div>
+    </section>
+
+    <section class="panel hand-panel" aria-labelledby="hand-title">
+      <div class="section-heading">
+        <div>
+          <span class="step">03</span>
+          <h2 id="hand-title">当前手牌</h2>
+        </div>
+        <div class="actions">
+          <button id="undo-button" class="text-button" type="button">撤销</button>
+          <button id="clear-button" class="text-button danger" type="button">清空</button>
+        </div>
+      </div>
+      <div id="hand" class="hand" aria-live="polite"></div>
+      <p id="status" class="status">请先选择定缺，并添加 13 张牌。</p>
+    </section>
+
+    <section class="panel results-panel" aria-labelledby="results-title">
+      <div class="section-heading">
+        <div>
+          <span class="step">04</span>
+          <h2 id="results-title">胡牌结果</h2>
+        </div>
+        <span class="hint">余牌数仅按当前手牌估算</span>
+      </div>
+      <div id="results" aria-live="polite">
+        <div class="empty-state">凑齐 13 张牌后，这里会显示计算结果。</div>
+      </div>
+    </section>
+
+    <footer>所有计算均在本机完成 · 不保存牌局</footer>
+  </main>
+
+  <script src="mahjong.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
+
