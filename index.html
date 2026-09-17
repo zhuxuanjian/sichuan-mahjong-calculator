@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#123e31">
-  <meta name="description" content="离线计算四川麻将 13 张手牌胡哪些牌，支持定缺、七对和龙七对。">
+  <meta name="description" content="四川麻将工具箱：离线胡牌计番，支持定缺、副露、七对和特殊胡牌情境。">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23185640'/%3E%3Ctext x='32' y='45' text-anchor='middle' font-size='42' fill='%23f5d879'%3E%E8%83%A1%3C/text%3E%3C/svg%3E">
-  <title>四川麻将听牌计算器</title>
+  <title>四川麻将工具箱</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -14,12 +14,19 @@
     <header class="hero">
       <div>
         <p class="eyebrow">四川麻将 · 血战到底</p>
-        <h1>听牌计算器</h1>
-        <p class="hero-copy">选定缺门，凑齐 13 张牌，即刻查看胡哪些牌。</p>
+        <h1>四川麻将工具箱</h1>
+        <p class="hero-copy">录入手牌与副露，即刻查看可胡牌与番数。</p>
       </div>
       <div class="hero-mark" aria-hidden="true">胡</div>
     </header>
 
+    <nav class="tool-nav" aria-label="工具切换">
+      <button type="button" data-route="hu" aria-controls="hu-page">胡牌计番</button>
+      <button type="button" data-route="settlement" aria-controls="settlement-page">牌局结算</button>
+      <button type="button" data-route="discard" aria-controls="discard-page">出牌建议</button>
+    </nav>
+
+    <div id="hu-page" data-page="hu">
     <section class="panel" aria-labelledby="missing-title">
       <div class="section-heading">
         <div>
@@ -28,10 +35,10 @@
         </div>
         <span class="hint">胡牌时手中不能有缺门</span>
       </div>
-      <div class="segmented" role="radiogroup" aria-label="定缺花色">
-        <button type="button" data-missing-suit="0" role="radio" aria-checked="false">缺万</button>
-        <button type="button" data-missing-suit="1" role="radio" aria-checked="false">缺筒</button>
-        <button type="button" data-missing-suit="2" role="radio" aria-checked="false">缺条</button>
+      <div class="segmented" role="group" aria-label="定缺花色">
+        <button type="button" data-missing-suit="0" aria-pressed="false">缺万</button>
+        <button type="button" data-missing-suit="1" aria-pressed="false">缺筒</button>
+        <button type="button" data-missing-suit="2" aria-pressed="false">缺条</button>
       </div>
     </section>
 
@@ -46,10 +53,26 @@
       <div id="tile-picker" class="tile-picker"></div>
     </section>
 
+    <section class="panel" aria-labelledby="meld-title">
+      <div class="section-heading"><div><span class="step">03</span><h2 id="meld-title">副露与暗杠</h2></div></div>
+      <div class="segmented" role="group" aria-label="副露类型">
+        <button type="button" data-meld-type="pong" aria-pressed="true">碰</button>
+        <button type="button" data-meld-type="openKong" aria-pressed="false">明杠</button>
+        <button type="button" data-meld-type="concealedKong" aria-pressed="false">暗杠</button>
+      </div>
+      <div class="meld-editor">
+        <label for="meld-tile">副露牌面</label>
+        <select id="meld-tile" aria-describedby="meld-hint"></select>
+        <button id="add-meld" class="primary-button" type="button">添加副露</button>
+      </div>
+      <p id="meld-hint" class="hint" aria-live="polite"></p>
+      <div id="melds" class="meld-list" aria-live="polite"></div>
+    </section>
+
     <section class="panel hand-panel" aria-labelledby="hand-title">
       <div class="section-heading">
         <div>
-          <span class="step">03</span>
+          <span class="step">04</span>
           <h2 id="hand-title">当前手牌</h2>
         </div>
         <div class="actions">
@@ -61,23 +84,46 @@
       <p id="status" class="status">请先选择定缺，并添加 13 张牌。</p>
     </section>
 
+    <section class="panel" aria-labelledby="context-title">
+      <div class="section-heading"><div><span class="step">05</span><h2 id="context-title">胡牌情境</h2></div></div>
+      <div class="context-controls">
+        <label for="win-method">胡牌方式<select id="win-method"><option value="discard">点炮</option><option value="selfDraw">自摸</option></select></label>
+        <label for="special-context">特殊情境<select id="special-context"><option value="normal">普通胡牌</option></select></label>
+      </div>
+      <p class="hint rule-note">本工具按素胡 0 番、自摸加 1 番、4 番封顶计算；请与牌桌约定核对。</p>
+    </section>
+
     <section class="panel results-panel" aria-labelledby="results-title">
       <div class="section-heading">
         <div>
-          <span class="step">04</span>
+          <span class="step">06</span>
           <h2 id="results-title">胡牌结果</h2>
         </div>
-        <span class="hint">余牌数仅按当前手牌估算</span>
+        <span class="hint">取最高番型 · 4 番封顶</span>
       </div>
       <div id="results" aria-live="polite">
         <div class="empty-state">凑齐 13 张牌后，这里会显示计算结果。</div>
       </div>
     </section>
 
+    </div>
+
+    <section id="settlement-page" data-page="settlement" class="panel" aria-labelledby="settlement-title" hidden>
+      <h2 id="settlement-title">牌局结算</h2>
+      <div class="empty-state">结算工具即将上线。当前可使用「胡牌计番」查看可胡牌与番数。</div>
+    </section>
+    <section id="discard-page" data-page="discard" class="panel" aria-labelledby="discard-title" hidden>
+      <h2 id="discard-title">出牌建议</h2>
+      <div class="empty-state">出牌建议工具即将上线。当前可使用「胡牌计番」调整手牌并查看听牌结果。</div>
+    </section>
+
     <footer>所有计算均在本机完成 · 不保存牌局</footer>
   </main>
 
   <script src="mahjong.js"></script>
+  <script src="scoring.js"></script>
+  <script src="ui-common.js"></script>
+  <script src="hu-page.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
