@@ -24,6 +24,32 @@ test('uses a 14-equivalent concealed target for every meld count', () => {
   assert.deepEqual([0, 1, 2, 3, 4].map((count) => DiscardPage.targetCount(Array(count).fill({}))), [14, 11, 8, 5, 2]);
 });
 
+test('prioritizes concealed count before missing-suit guidance', () => {
+  const incompleteWithMissing = DiscardPage.createAnalysisView({
+    ...DiscardPage.createState(),
+    hand: hand('123m123p456p77s'),
+    missingSuit: 2,
+  }, Mahjong, Scoring);
+  const overfullWithMissing = DiscardPage.createAnalysisView({
+    ...DiscardPage.createState(),
+    hand: hand('123m123p456p777p99m1s'),
+    missingSuit: 2,
+  }, Mahjong, Scoring);
+  const incompleteWithoutMissingSuit = DiscardPage.createAnalysisView({
+    ...DiscardPage.createState(),
+    hand: hand('123m123p456p77s'),
+  }, Mahjong, Scoring);
+  const completeWithoutMissingSuit = DiscardPage.createAnalysisView({
+    ...DiscardPage.createState(),
+    hand: hand('123m123p456p777p99m'),
+  }, Mahjong, Scoring);
+
+  assert.deepEqual(incompleteWithMissing, { kind: 'incomplete', message: '还差 3 张暗手牌。' });
+  assert.deepEqual(overfullWithMissing, { kind: 'incomplete', message: '副露已更新，请移除 1 张多余暗手牌。' });
+  assert.deepEqual(incompleteWithoutMissingSuit, { kind: 'incomplete', message: '还差 3 张暗手牌。' });
+  assert.deepEqual(completeWithoutMissingSuit, { kind: 'incomplete', message: '请先选择定缺花色。' });
+});
+
 test('rejects a fifth meld before showing a negative concealed target', () => {
   const view = DiscardPage.createAnalysisView({
     ...DiscardPage.createState(),

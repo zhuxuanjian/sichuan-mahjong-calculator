@@ -31,19 +31,11 @@
 
   function renderResults(counts) {
     elements.status.className = 'status';
-    const missing = counts.flatMap((count, tile) => count && Mahjong.tileSuit(tile) === state.missingSuit
-      ? [`${ui.tileLabel(tile)}${count > 1 ? `×${count}` : ''}`] : []);
-    const missingMelds = state.melds.filter((meld) => Mahjong.tileSuit(meld.tile) === state.missingSuit);
-    if (missing.length || missingMelds.length) {
-      elements.status.textContent = (missing.length ? `请先打出：${missing.join('、')}。` : '')
-        + (missingMelds.length ? '副露中也有定缺花色，请移除或修正对应副露。' : '');
+    const globalValidation = Mahjong.validateTileState(counts, state.melds);
+    if (!globalValidation.ok) {
+      elements.status.textContent = globalValidation.error;
       elements.status.classList.add('error');
-      emptyResult('清除定缺花色后才能计算胡牌与番数。');
-      return;
-    }
-    if (state.missingSuit === null) {
-      elements.status.textContent = '请先选择定缺花色。';
-      emptyResult('选择定缺并补齐手牌后，这里会显示可胡牌与番数。');
+      emptyResult('当前手牌不符合计算条件。');
       return;
     }
     if (state.hand.length !== target()) {
@@ -52,6 +44,21 @@
         : `副露已更新，请移除 ${-difference} 张多余暗手牌。`;
       if (difference < 0) elements.status.classList.add('error');
       emptyResult(`当前需要 ${target()} 张暗手牌，已有 ${state.melds.length} 组副露。`);
+      return;
+    }
+    if (state.missingSuit === null) {
+      elements.status.textContent = '请先选择定缺花色。';
+      emptyResult('选择定缺并补齐手牌后，这里会显示可胡牌与番数。');
+      return;
+    }
+    const missing = counts.flatMap((count, tile) => count && Mahjong.tileSuit(tile) === state.missingSuit
+      ? [`${ui.tileLabel(tile)}${count > 1 ? `×${count}` : ''}`] : []);
+    const missingMelds = state.melds.filter((meld) => Mahjong.tileSuit(meld.tile) === state.missingSuit);
+    if (missing.length || missingMelds.length) {
+      elements.status.textContent = (missing.length ? `请先打出：${missing.join('、')}。` : '')
+        + (missingMelds.length ? '副露中也有定缺花色，请移除或修正对应副露。' : '');
+      elements.status.classList.add('error');
+      emptyResult('清除定缺花色后才能计算胡牌与番数。');
       return;
     }
     try {

@@ -111,10 +111,11 @@
     if (!Array.isArray(currentState.melds) || currentState.melds.length > 4) {
       return { kind: 'error', message: '最多只能录入 4 组副露。' };
     }
-    const target = targetCount(currentState.melds);
-    if (![0, 1, 2].includes(currentState.missingSuit)) {
-      return { kind: 'incomplete', message: '请先选择定缺花色。' };
+    const globalValidation = mahjong.validateTileState(handCounts(currentState.hand), currentState.melds);
+    if (!globalValidation.ok) {
+      return { kind: 'error', message: globalValidation.error };
     }
+    const target = targetCount(currentState.melds);
     if (currentState.hand.length !== target) {
       const difference = target - currentState.hand.length;
       return {
@@ -123,6 +124,9 @@
           ? `还差 ${difference} 张暗手牌。`
           : `副露已更新，请移除 ${-difference} 张多余暗手牌。`,
       };
+    }
+    if (![0, 1, 2].includes(currentState.missingSuit)) {
+      return { kind: 'incomplete', message: '请先选择定缺花色。' };
     }
     if (hasMissingSuitMeld(currentState)) {
       return { kind: 'blocked', message: '副露中有定缺花色，请先移除或修正对应副露。' };

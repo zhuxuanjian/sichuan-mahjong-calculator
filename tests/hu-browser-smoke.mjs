@@ -91,6 +91,31 @@ try {
     await new Promise((resolveWait) => setTimeout(resolveWait, 100));
   }
 
+  const initialCount = await evaluate(`(() => ({
+    status: document.querySelector('#status').textContent,
+    result: document.querySelector('#results').textContent.trim(),
+  }))()`);
+  assert.deepEqual(initialCount, {
+    status: '还差 13 张暗手牌。',
+    result: '当前需要 13 张暗手牌，已有 0 组副露。',
+  });
+
+  const incompleteWithMissing = await evaluate(`(() => {
+    const click = (selector) => document.querySelector(selector).click();
+    click('[data-missing-suit="2"]');
+    click('#tile-picker [data-tile="18"]');
+    const view = {
+      status: document.querySelector('#status').textContent,
+      result: document.querySelector('#results').textContent.trim(),
+    };
+    click('#clear-button');
+    return view;
+  })()`);
+  assert.deepEqual(incompleteWithMissing, {
+    status: '还差 12 张暗手牌。',
+    result: '当前需要 13 张暗手牌，已有 0 组副露。',
+  });
+
   await evaluate(`(() => {
     const click = (selector) => {
       const control = document.querySelector(selector);
@@ -105,9 +130,18 @@ try {
     };
     const addTiles = (tiles) => tiles.forEach((tile) => click('#tile-picker [data-tile="' + tile + '"]'));
     window.__huSmoke = { click, change, addTiles };
-    click('[data-missing-suit="2"]');
     addTiles([0, 1, 2, 8, 8, 9, 10, 11, 12, 13, 14, 15, 15]);
   })()`);
+
+  const completeWithoutMissingSuit = await evaluate(`(() => ({
+    status: document.querySelector('#status').textContent,
+    result: document.querySelector('#results').textContent.trim(),
+  }))()`);
+  assert.deepEqual(completeWithoutMissingSuit, {
+    status: '请先选择定缺花色。',
+    result: '选择定缺并补齐手牌后，这里会显示可胡牌与番数。',
+  });
+  await evaluate('window.__huSmoke.click(\'[data-missing-suit="2"]\')');
 
   const listening = await evaluate(`(() => ({
     route: location.hash,
@@ -176,7 +210,7 @@ try {
   assert.deepEqual(mobile, { exactWidth: true, resultInBounds: true, current: 'page' });
   await screenshot('hu-mobile-375.png');
 
-  console.log(JSON.stringify({ listening, missingSuit, restored, mobile, outputDir }, null, 2));
+  console.log(JSON.stringify({ initialCount, incompleteWithMissing, completeWithoutMissingSuit, listening, missingSuit, restored, mobile, outputDir }, null, 2));
   await client.send('Browser.close');
 } finally {
   if (client) client.close();
