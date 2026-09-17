@@ -189,6 +189,92 @@
     return results;
   }
 
+  function containsSuit(counts, suit) {
+    return counts.some((count, tile) => count > 0 && tileSuit(tile) === suit);
+  }
+
+  function validateDiscardChoice(input) {
+    if (!input || ![0, 1, 2].includes(input.missingSuit)) {
+      throw new Error('请选择有效的定缺花色');
+    }
+    if (!Number.isInteger(input.discardTile) || input.discardTile < 0 || input.discardTile >= 27) {
+      throw new Error('请选择有效的打出牌');
+    }
+    if (input.concealedCounts[input.discardTile] < 1) {
+      throw new Error('手牌中没有选中的打出牌');
+    }
+    if (containsSuit(input.concealedCounts, input.missingSuit)
+      && tileSuit(input.discardTile) !== input.missingSuit) {
+      throw new Error('必须先打出定缺花色');
+    }
+    if (typeof input.scoreBestWin !== 'function') {
+      throw new Error('请提供计分函数');
+    }
+  }
+
+  function knownPhysicalCounts(concealedCounts, melds) {
+    const totals = concealedCounts.slice();
+    for (const meld of melds) {
+      totals[meld.tile] += MELD_TYPES[meld.type];
+    }
+    return totals;
+  }
+
+  function buildWaitResult(input, postDiscard, knownCounts, win) {
+    const winningCounts = postDiscard.slice();
+    winningCounts[win.tile] += 1;
+    const scoreInput = {
+      concealedCounts: winningCounts,
+      winningTile: win.tile,
+      melds: input.melds,
+      interpretations: win.interpretations,
+      specialContext: 'normal',
+    };
+    return {
+      tile: win.tile,
+      remaining: 4 - knownCounts[win.tile],
+      discardScore: input.scoreBestWin({ ...scoreInput, winMethod: 'discard' }),
+      selfDrawScore: input.scoreBestWin({ ...scoreInput, winMethod: 'selfDraw' }),
+    };
+  }
+
+  function analyzeDiscard(input) {
+    const normalized = input || {};
+    const melds = normalized.melds === undefined ? [] : normalized.melds;
+    const validation = validateTileState(
+      normalized.concealedCounts,
+      melds,
+      14 - ((Array.isArray(melds) ? melds.length : 0) * 3),
+    );
+    if (!validation.ok) {
+      throw new Error(validation.error);
+    }
+    const analysisInput = { ...normalized, melds };
+    validateDiscardChoice(analysisInput);
+
+    const postDiscard = normalized.concealedCounts.slice();
+    postDiscard[normalized.discardTile] -= 1;
+    if (containsSuit(postDiscard, normalized.missingSuit)) {
+      return {
+        discardTile: normalized.discardTile,
+        blockedReason: '打出后仍有定缺牌，请继续打定缺',
+        waits: [],
+      };
+    }
+
+    const wins = findWinningTiles({
+      concealedCounts: postDiscard,
+      melds,
+      missingSuit: normalized.missingSuit,
+    });
+    const knownCounts = knownPhysicalCounts(normalized.concealedCounts, melds);
+    return {
+      discardTile: normalized.discardTile,
+      blockedReason: null,
+      waits: wins.map((win) => buildWaitResult(analysisInput, postDiscard, knownCounts, win)),
+    };
+  }
+
   return {
     tileSuit,
     tileRank,
@@ -198,5 +284,6 @@
     isStandardWin,
     getSpecialHands,
     findWinningTiles,
+    analyzeDiscard,
   };
 });
