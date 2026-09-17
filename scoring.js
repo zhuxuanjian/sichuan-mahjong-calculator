@@ -66,9 +66,8 @@
       && concealedCounts.some((count) => count === 2);
   }
 
-  function isBigPairs(interpretation, melds) {
+  function isBigPairs(interpretation) {
     return interpretation.kind === 'standard'
-      && melds.length < 4
       && interpretation.melds.every((meld) => meld.kind === 'triplet');
   }
 
@@ -82,10 +81,11 @@
 
     if (interpretation.kind === 'sevenPairs') {
       breakdown.push({ name: '七对', fan: 2 });
-    } else if (isGoldHook(concealedCounts, melds, interpretation)) {
-      breakdown.push({ name: '金钩钓', fan: 1 });
-    } else if (isBigPairs(interpretation, melds)) {
+    } else if (isBigPairs(interpretation)) {
       breakdown.push({ name: '大对子', fan: 1 });
+    }
+    if (isGoldHook(concealedCounts, melds, interpretation)) {
+      breakdown.push({ name: '金钩钓', fan: 1 });
     }
 
     const roots = allTileCounts(concealedCounts, melds)

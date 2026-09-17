@@ -63,7 +63,7 @@ test('scores a standard all-triplets hand as big pairs', () => {
   assert.equal(result.rawFan, 1);
 });
 
-test('scores four exposed pongs and a concealed pair as gold hook without roots', () => {
+test('adds big pairs and gold hook for four exposed pongs and a concealed pair', () => {
   const melds = [
     { type: 'pong', tile: 0 },
     { type: 'pong', tile: 1 },
@@ -71,11 +71,11 @@ test('scores four exposed pongs and a concealed pair as gold hook without roots'
     { type: 'pong', tile: 10 },
   ];
   const result = scoreNotation('55s', 'discard', 'normal', melds);
-  assert.deepEqual(names(result), ['金钩钓']);
-  assert.equal(result.rawFan, 1);
+  assert.deepEqual(names(result), ['大对子', '金钩钓']);
+  assert.equal(result.rawFan, 2);
 });
 
-test('scores four exposed melds as gold hook without also labeling big pairs', () => {
+test('adds big pairs and gold hook with each exposed-kong root', () => {
   const melds = [
     { type: 'pong', tile: 0 },
     { type: 'pong', tile: 1 },
@@ -83,8 +83,8 @@ test('scores four exposed melds as gold hook without also labeling big pairs', (
     { type: 'concealedKong', tile: 10 },
   ];
   const result = scoreNotation('55s', 'discard', 'normal', melds);
-  assert.deepEqual(names(result), ['金钩钓', '根', '根']);
-  assert.equal(result.rawFan, 3);
+  assert.deepEqual(names(result), ['大对子', '金钩钓', '根', '根']);
+  assert.equal(result.rawFan, 4);
 });
 
 test('counts every concealed four-of-a-kind as a separate root', () => {
