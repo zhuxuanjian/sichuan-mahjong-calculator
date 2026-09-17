@@ -76,6 +76,17 @@ test('rejects a hand that still contains the missing suit', () => {
   );
 });
 
+test('rejects a hand whose exposed meld contains the missing suit', () => {
+  assert.throws(
+    () => waits(
+      counts('123p456p777p9s'),
+      [{ type: 'pong', tile: 0 }],
+      0,
+    ),
+    /手牌中仍有定缺花色/,
+  );
+});
+
 test('never offers a fifth concealed copy as a winning tile', () => {
   const result = waits(counts('1111m222m333m44m5m'), [], 1);
   assert.equal(result.some((item) => item.tile === 0), false);

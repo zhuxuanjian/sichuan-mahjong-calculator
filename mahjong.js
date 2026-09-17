@@ -162,7 +162,10 @@
     if (![0, 1, 2].includes(missingSuit)) {
       throw new Error('请选择有效的定缺花色');
     }
-    if (concealedCounts.some((count, tile) => count > 0 && tileSuit(tile) === missingSuit)) {
+    const hasMissingSuit = concealedCounts.some(
+      (count, tile) => count > 0 && tileSuit(tile) === missingSuit,
+    ) || melds.some((meld) => tileSuit(meld.tile) === missingSuit);
+    if (hasMissingSuit) {
       throw new Error('手牌中仍有定缺花色');
     }
 
