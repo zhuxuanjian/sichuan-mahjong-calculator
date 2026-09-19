@@ -108,19 +108,6 @@
     return interpretations;
   }
 
-  function isStandardWin(counts) {
-    return getWinInterpretations(counts).some((win) => win.kind === 'standard');
-  }
-
-  function getSpecialHands(counts) {
-    if (!validateCounts(counts, 14).ok) {
-      return { sevenPairs: false, dragonPairs: false, dragonCount: 0 };
-    }
-    const sevenPairs = isSevenPairs(counts);
-    const dragonCount = sevenPairs ? counts.filter((count) => count === 4).length : 0;
-    return { sevenPairs, dragonPairs: dragonCount > 0, dragonCount };
-  }
-
   function containsSuit(counts, suit) {
     return counts.some((count, tile) => count > 0 && tileSuit(tile) === suit);
   }
@@ -207,8 +194,6 @@
     isValidHuCount,
     isValidDiscardCount,
     getWinInterpretations,
-    isStandardWin,
-    getSpecialHands,
     findWinningTiles,
     analyzeDiscard,
   };

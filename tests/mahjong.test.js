@@ -102,12 +102,3 @@ test('does not mutate frozen input counts', () => {
   Mahjong.findWinningTiles({ concealedCounts, missingSuit: 2 });
   assert.deepEqual(concealedCounts, original);
 });
-
-test('keeps compatibility helpers for complete dark hands', () => {
-  assert.equal(Mahjong.isStandardWin(counts('123m123p789p777s11s')), true);
-  assert.deepEqual(Mahjong.getSpecialHands(counts('11112233445566m')), {
-    sevenPairs: true,
-    dragonPairs: true,
-    dragonCount: 1,
-  });
-});
