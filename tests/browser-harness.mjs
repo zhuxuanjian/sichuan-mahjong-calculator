@@ -65,6 +65,12 @@ export async function runBrowser(projectRoot, route, check) {
   } finally {
     if (socket) socket.close();
     if (edge.exitCode === null && !edge.killed) edge.kill();
+    if (edge.exitCode === null) {
+      await new Promise((done) => {
+        const timer = setTimeout(done, 5000);
+        edge.once('exit', () => { clearTimeout(timer); done(); });
+      });
+    }
     await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 }
