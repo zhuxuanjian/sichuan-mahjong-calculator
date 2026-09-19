@@ -68,10 +68,11 @@ button:focus-visible { outline: 3px solid #f3d36e; outline-offset: 2px; }
 .tile[data-suit="1"] .tile-suit { color: #28639f; }
 .tile[data-suit="2"] .tile-suit { color: #27824c; }
 .tile:disabled { cursor: not-allowed; filter: grayscale(.7); opacity: .3; }
-.hand { display: grid; grid-template-columns: repeat(var(--hand-size, 1), minmax(0, 1fr)); gap: 5px; min-height: 91px; padding: 12px; border: 1px dashed rgba(24,86,64,.26); border-radius: 14px; background: #e8eddf; }
+.hand { display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 5px; min-height: 91px; padding: 12px; border: 1px dashed rgba(24,86,64,.26); border-radius: 14px; background: #e8eddf; }
 .hand:empty::before { content: "点击上方牌面添加手牌"; margin: auto; color: #7c897f; font-size: .85rem; }
-.hand .tile { position: relative; }
-.hand-slot { position: relative; min-width: 0; }
+.hand > .tile, .hand > .hand-slot { flex: 0 1 52px; min-width: 0; }
+.hand .tile { position: relative; min-height: 0; aspect-ratio: 52 / 65; }
+.hand-slot { position: relative; aspect-ratio: 52 / 65; }
 .hand-slot .tile { height: 100%; }
 .tile-remove { position: absolute; z-index: 2; top: -5px; right: -4px; width: 19px; height: 19px; padding: 0; border: 0; border-radius: 50%; color: white; background: var(--danger); font-size: 14px; line-height: 1; cursor: pointer; }
 .missing-warning { border: 2px solid var(--danger); background: #ffebe4; }
@@ -93,6 +94,7 @@ button:focus-visible { outline: 3px solid #f3d36e; outline-offset: 2px; }
 .discard-hand .tile.disabled-by-missing-suit { filter: grayscale(1); opacity: .24; }
 .discard-selection-summary { margin: 10px 0 0; padding: 10px 12px; border-left: 4px solid var(--gold); border-radius: 8px; color: #5f521f; background: #fff6cf; font-size: .84rem; }
 .discard-result-heading { margin: 0 0 13px; color: var(--felt-deep); font-size: 1rem; }
+.remaining-note { margin: -8px 0 14px; white-space: nowrap; }
 .discard-result-card.dead-wait { border-left-color: var(--danger); background: #fae9e4; }
 .discard-result-body { min-width: 0; }
 .wait-availability { margin-top: 4px; color: var(--muted); font-size: .8rem; font-weight: 800; }
@@ -109,7 +111,8 @@ footer { padding-top: 22px; color: rgba(255,255,255,.58); font-size: .75rem; tex
   .tile-row { gap: 3px; }
   .tile-row .tile { min-height: 48px; padding: 3px 0; }
   .hand { gap: 2px; padding: 8px; min-height: 62px; }
-  .hand .tile { min-height: 43px; padding: 3px 0; flex-direction: column; gap: 0; }
+  .hand .tile { padding: 3px 0; flex-direction: column; gap: 0; }
+  .remaining-note { max-width: none; text-align: left; font-size: clamp(.62rem, 2.5vw, .78rem); }
   .tile-rank { font-size: clamp(.66rem, 3.8vw, 1.25rem); }
   .tile-suit { align-self: center; font-size: clamp(.48rem, 2.3vw, .68rem); }
   .hand .tile-rank { font-size: clamp(.57rem, 2.8vw, .88rem); }

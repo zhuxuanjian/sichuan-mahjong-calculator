@@ -13,6 +13,22 @@ await runBrowser(projectRoot, 'discard', async ({ send, evaluate }) => {
   }))()`);
   assert.deepEqual(initial, { route: '#discard', status: '请添加手牌。', adjacent: true });
 
+  const oneTile = await evaluate(`(() => {
+    document.querySelector('#discard-tile-picker [data-tile="0"]').click();
+    const tile = document.querySelector('#discard-hand .tile').getBoundingClientRect();
+    const hand = document.querySelector('#discard-hand').getBoundingClientRect();
+    const result = {
+      width: tile.width,
+      ratio: tile.width / tile.height,
+      centered: Math.abs((tile.left + tile.right) / 2 - (hand.left + hand.right) / 2) < 2,
+    };
+    document.querySelector('#discard-clear-button').click();
+    return result;
+  })()`);
+  assert.ok(oneTile.width <= 54, `single discard tile widened to ${oneTile.width}px`);
+  assert.ok(Math.abs(oneTile.ratio - 0.8) < 0.08);
+  assert.equal(oneTile.centered, true);
+
   const complete = await evaluate(`(() => {
     document.querySelector('[data-discard-missing-suit="2"]').click();
     [0,1,2,9,10,11,12,13,14,15,15,15,8,8].forEach((tile) =>
@@ -53,12 +69,34 @@ await runBrowser(projectRoot, 'discard', async ({ send, evaluate }) => {
     handRows: new Set([...document.querySelectorAll('#discard-hand .tile')].map((node) => Math.round(node.getBoundingClientRect().top))).size,
     handCount: document.querySelectorAll('#discard-hand .tile').length,
     removeButtons: document.querySelectorAll('#discard-hand .tile-remove').length,
+    tileRatios: [...document.querySelectorAll('#discard-hand .tile')].map((node) => node.getBoundingClientRect().width / node.getBoundingClientRect().height),
+    note: (() => {
+      const note = document.querySelector('#discard-page .remaining-note');
+      if (!note) return null;
+      const box = note.getBoundingClientRect();
+      const heading = document.querySelector('#discard-results-title').getBoundingClientRect();
+      const textRange = document.createRange();
+      textRange.selectNodeContents(note);
+      return {
+        text: note.textContent.trim(),
+        belowTitle: box.top >= heading.bottom,
+        singleLine: textRange.getClientRects().length === 1,
+        inBounds: box.left >= 0 && box.right <= innerWidth && note.scrollWidth <= note.clientWidth,
+      };
+    })(),
   }))()`);
   assert.equal(mobile.overflow, false);
   assert.deepEqual(mobile.suitRows, [1, 1, 1]);
   assert.equal(mobile.handRows, 1);
   assert.equal(mobile.handCount, 14);
   assert.equal(mobile.removeButtons, 14);
+  assert.ok(mobile.tileRatios.every((ratio) => Math.abs(ratio - 0.8) < 0.08));
+  assert.deepEqual(mobile.note, {
+    text: '理论剩余数仅扣除已录入的手牌',
+    belowTitle: true,
+    singleLine: true,
+    inBounds: true,
+  });
   const removal = await evaluate(`(() => {
     document.querySelector('#discard-hand .tile-remove').click();
     const afterRemove = { hand: document.querySelectorAll('#discard-hand .tile').length, status: document.querySelector('#discard-status').textContent };

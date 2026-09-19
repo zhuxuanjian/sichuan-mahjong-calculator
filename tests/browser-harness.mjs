@@ -71,6 +71,11 @@ export async function runBrowser(projectRoot, route, check) {
         edge.once('exit', () => { clearTimeout(timer); done(); });
       });
     }
-    await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    try {
+      await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    } catch (error) {
+      if (error.code !== 'EBUSY') throw error;
+      // Windows can keep Edge dictionary files locked briefly after the browser exits.
+    }
   }
 }
